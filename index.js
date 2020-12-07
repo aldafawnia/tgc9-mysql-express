@@ -225,9 +225,11 @@ async function main() {
   app.get("/films/create", async (req, res) => {
     let [languages] = await connection.execute("select * from language");
     let [actors] = await connection.execute("select * from actor");
+    let [categories] = await connection.execute("select * from category")
     res.render("create_film", {
       languages: languages,
       actors: actors,
+      categories: categories
     });
   });
 
@@ -253,13 +255,14 @@ async function main() {
         rental_duration,
         replacement_cost,
         actor_id,
+        category_id,
       } = req.body;
 
       let [results] = await connection.execute(
         `
         insert into film 
-        ( title, description, release_year, language_id, rental_duration, replacement_cost)
-        values (?, ?, ?, ?, ?, ?)`,
+        ( title, description, release_year, language_id, rental_duration, replacement_cost, category_id)
+        values (?, ?, ?, ?, ?, ?, ?)`,
         [
           title,
           description,
@@ -267,6 +270,7 @@ async function main() {
           language_id,
           rental_duration,
           replacement_cost,
+          category_id
         ]
       );
 
@@ -280,6 +284,12 @@ async function main() {
           [eachActor, newFilmId]
         );
       }
+
+      for (let eachCategory of category_id) {
+          connection.execute(`insert into film_category (category_id, film_id) 
+          values (?,?)`, [eachCategory, newFilmId]);
+      }
+
       connection.commit();
       res.redirect("/films");
     } catch (e) {
@@ -296,6 +306,13 @@ async function main() {
       let [languages] = await connection.execute("select * from language");
       let [actors] = await connection.execute("select * from actor");
       let [existing_actors] = await connection.execute('select actor_id from film_actor where film_id=?', [wanted_film_id])
+    
+      let [categories] = await connection.execute('select * from category');
+      let [existing_categories] = await connection.execute('select * from film_category where film_id=?', [wanted_film_id])
+      existingCategories_id = existing_categories
+      .map(function(eachCategory){
+          return eachCategory.category_id;
+      })
 
       let existing_actor_ids = [];
       for (let a of existing_actors) {
@@ -307,10 +324,9 @@ async function main() {
           'wanted_film': wanted_film,
           'languages': languages,
           'actors': actors,
-          'existing_actors': existing_actor_ids
+          'existing_actors': existing_actor_ids,
+          'existing_categories': existingCategories_id
       })
-
-
   })
 
   app.post('/films/:film_id/update', async (req, res)=>{
@@ -371,6 +387,8 @@ async function main() {
     }
  
 })
+
+
 
 } //  end mains
 

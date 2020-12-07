@@ -55,6 +55,14 @@ $(document).ready(function() {
         <label class="form-label">Replacement Cost</label>
         <input type="text" class="form-control" name="replacement_cost" value="{{wanted_film.replacement_cost}}"/>
     </div>
+    <div>
+        <label class="form-label">Category</label>
+        <select name="category_id" multiple class="form-control" id="categories">
+            {{#each categories}}
+            <option value="{{this.category_id}}" {{#inArray  ../existing_categories this.category_id }}selected{{/inArray}}>{{this.name}}</option>
+            {{/each}}
+        </select>
+    </div>
 
 
 <input type="submit" class="btn btn-primary" value="Update"/>
